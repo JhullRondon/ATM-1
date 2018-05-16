@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <img alt="cajero" src="files/cajero.gif" />
+        <br />
+        <input id="botonInsertarTarjeta" type="button" onclick="iniciarSesion()" value="Insertar Tarjeta" />
+        <div id="divSesionIniciada" style="display: none">
+            <label id="labelDatosUsuario"></label>
+            <input id="botonRetirar" type="button" onclick="retirar()" value="Retirar"> 
+            <input id="botonDepositar" type="button" onclick="depositar()" value="Depositar"> 
+            <input id="botonCerrarSesion" type="button" onclick="cerrarSesion()" value="Cerrar Sesión" > 
+        </div>
+        <script src="clases/billete.js"></script>
+        <script src="clases/usuario.js"></script>
+        <script src="clases/utilerias.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
