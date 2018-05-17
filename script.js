@@ -71,6 +71,8 @@ function cerrarSesion(){
     //OCULTAMOS Y/O MOSTRARMOS ALGUNOS BOTONES.
     document.getElementById('divSesionIniciada').style.display = "none";
     document.getElementById('botonInsertarTarjeta').style.display = "initial";
+    var div_billetes = document.getElementById('div_billetes');
+    div_billetes.innerHTML = "";
 }
 
 //FUNCION PARA RETIRAR DINERO
@@ -91,6 +93,8 @@ function retirar(){
             //VALIDAMOS QUE TU CUENTA TENGA EL DINERO SUFICIENTE PARA RETIRAR LO QUE PIDES.
             if (cantidad <= usuarioActual.dinero) {
                 var cantidadEntregada = 0;
+                var div_billetes = document.getElementById('div_billetes');
+                div_billetes.innerHTML = "";
                 for (var billete of cajero.billetes){
                     if (cantidad > 0) {
                         var division = Math.floor(cantidad/billete.valor);
@@ -111,6 +115,10 @@ function retirar(){
                         cantidad -= (billete.valor * papeles);
                         //ACTUALIZAMOS EL DINERO QUE TIENE EL USUARIO EN SU CUENTA.
                         usuarioActual.dinero -= (billete.valor * papeles);
+                        //MOSTRAMOS LOS BILLETES
+                        for (var i = 0; i < papeles; i++) {
+                            div_billetes.innerHTML += "<img alt='billete' src='files/" + billete.valor + ".png' style='margin: 5px;' />";
+                        }
                     }
                     else {
                         break;
@@ -154,13 +162,19 @@ function depositar(){
             valor: billete.valor,
             cantidad: billete.cantidad
         });
+        //OBTENEMOS LA CANTIDAD DE BILLETES QUE VAN A INSERTAR
         billetesNuevos[billetesNuevos.length - 1].cantidad = parseInt(prompt("¿Cuántos billetes de $" + billete.valor + " agregarás?"));
+        //VALIDAMOS QUE LO INSERTADO EN EL PROMPT SEA UNA CANTIDAD VALIDA
         billetesNuevos[billetesNuevos.length - 1].cantidad = Utilerias.NaNInt(billetesNuevos[billetesNuevos.length - 1].cantidad);
+        //ACTUALIZAMOS LA CANTIDAD DE BILLETES EN EL CAJERO
         billete.cantidad += billetesNuevos[billetesNuevos.length - 1].cantidad;
+        //ACTUALIZAMOS EL BALANCE DEL USUARIO
         usuarioActual.dinero += (billetesNuevos[billetesNuevos.length - 1].cantidad * billete.valor);
     }
     cargarDatosUsuario(usuario);
     calcularValorCajero();
+    var div_billetes = document.getElementById('div_billetes');
+    div_billetes.innerHTML = "";
 }
 
 //FUNCION PARA CARGAR LOS DATOS DEL USUARIO
