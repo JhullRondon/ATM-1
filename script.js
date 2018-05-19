@@ -95,28 +95,91 @@ function retirar(){
                 var cantidadEntregada = 0;
                 var div_billetes = document.getElementById('div_billetes');
                 div_billetes.innerHTML = "";
-                for (var billete of cajero.billetes){
-                    if (cantidad > 0) {
-                        var division = Math.floor(cantidad/billete.valor);
-                        var papeles;
-                        if (division > billete.cantidad) {
-                            papeles = billete.cantidad;
+                
+                //AQUI ES DONDE IMPLEMENTAMOS EL NUEVO PROCESO
+                //VAMOS A ALMACENAR LOS DATOS DEL CAJERO Y LA CANTIDAD SOLICITADA EN VARIABLES TEMPORALES.
+                //LO ALMACENAMOS EN VARIABLES TEMPORALES PORQUE VAMOS A HACER UNA SERIE DE CALCULOS QUE 
+                //PODRÁN AFECTAR VARIABLES QUE NO QUEREMOS MODIFICAR HASTA QUE ESTEMOS SEGUROS DE LAS CANTIDADES
+                //QUE VAMOS A RESTAR.
+                var posiblesEntregas = [];
+                var cajeroTemp = [];
+                for (var i = 0; i < cajero.billetes.length; i++) {
+                    //OBTENEMOS LA CANTIDAD TEMPORAL
+                    var cantidadTemp = cantidad;
+                    var cantidadEntregadaTemp = cantidadEntregada;
+                    //POSIBLES ENTREGAS NOS SERVIRA PARA SABER CUÁLES SON LOS CONJUNTOS DE BILLETES
+                    //QUE VAMOS A VALIDAR DESPUES PARA DETERMINAR CUÁL ES LA ÓPTIMA
+                    posiblesEntregas[i] = [];
+                    cajeroTemp[i] = [];
+                    //AQUI UNA COPIA TEMPORAL DE LOS BILLETES QUE EXISTEN EN EL CAJERO
+                    for (var billete of cajero.billetes){
+                        cajeroTemp[i].push(new Billete(billete.valor, billete.cantidad));
+                    }
+                    //EN ESTE CÓDIGO LE DECIMOS AL PROGRAMA QUE EN CADA ITERACION VAMOS A "PRETENDER"
+                    //ALGUNOS BILLETES SE AGOTARON.
+                    //POR EJEMPLO - EN LA PRIMERA ITERACION EMPEZAMOS UTILIZANDO TODOS LOS BILLETES DEL CAJERO.
+                    //EN LA SEGUNDA HACEMOS LA PRUEBA DE CÓMO QUEDARÍA LA ENTREGA DE BIILETES CUANDO LOS BILLETES DE 100 SE AGOTEN
+                    //EN LA TERCERA HACEMOS LA PRUEBA DE LO QUE PASARÍA CUANDO LOS BILLETES DE 100 Y 50 SE AGOTEN.
+                    //EN LA CUARTA HACEMOS LA PRUEBA DE LO QUE PASARÍA CUANDO LOS BILLETES DE 100, 50 Y 20 SE AGOTEN.
+                    for (var j = 0; j < i; j++) {
+                        cajeroTemp[i][j].cantidad = 0;
+                    }
+                    
+                    //ESTA PARTE DEL CÓDIGO ES LA QUE IMPLEMENTA FREDDY
+                    for (var billete of cajeroTemp[i]){
+                        if (cantidadTemp > 0) {
+                            var division = Math.floor(cantidadTemp/billete.valor);
+                            var papeles;
+                            if (division > billete.cantidad) {
+                                papeles = billete.cantidad;
+                            }
+                            else {
+                                papeles = division;
+                            }
+                            //AGREGAMOS UNA POSIBLE ENTREGA
+                            posiblesEntregas[i].push(new Billete(billete.valor, papeles));
+                            //ACTUALIZAMOS LOS BILLETES QUE QUEDA EN EL CAJERO.
+                            cajeroTemp[i][cajeroTemp[i].indexOf(billete)].cantidad -= papeles;
+                            //GUARDAMOS CUÁNTO HEMOS ENTREGADO, ESTO LO USAMOS DESPUÉS.
+                            cantidadEntregadaTemp += (billete.valor * papeles);
+                            //ESTA VARIABLE ES MUY IMPORTANTE, NOS SERVIRÁ PARA SABER EN QUÉ POSIBLES ENTREGAS, ENTREGAMOS EL DINERO COMPLETO.
+                            //YA QUE ES POSIBLE QUE POR EJEMPLO EL USUARIO SOLICITE 60 Y EL CAJERO YA NO TIENE BILLETES DE 10.
+                            //EN ESE CASO ES MEJOR DAR 3 BILLETES DE 20 QUE DAR SOLAMENTE 1 DE 50 PORQUE RESTAN 10 POR ENTREGAR.
+                            posiblesEntregas[i].dineroRestante = cantidadTemp -= (billete.valor * papeles);
                         }
                         else {
-                            papeles = division;
+                            break;
                         }
-                        entregados.push(new Billete(billete.valor, papeles));
+                    }
+                }
+                //AQUÍ VALIDAMOS CUÁL ES LA ENTREGA ÓPTIMA.
+                //SI EXISTE UNA ENTREGA OPTIMA ELIMINAMOS LAS DEMAS.
+                for (var i = 0; i < posiblesEntregas.length; i++) {
+                    if (posiblesEntregas[i].dineroRestante === 0) {
+                        posiblesEntregas[0] = posiblesEntregas[i];
+                        var cantidadEntregas = posiblesEntregas.length;
+                        for (var j = 1; j < cantidadEntregas; j++) {
+                            delete posiblesEntregas[j];
+                        }
+                        break;
+                    }
+                }
+                //AQUÍ PASAMOS TODO EL TRABAJO QUE HICIMOS CON LAS VARIABLES TEMPORALES
+                //A LAS VARIABLES FINALES QUE NOS INTERESAN EN LA APLICACIÓN.
+                for (var billete of posiblesEntregas[0]) {
+                    if (cantidad > 0) {
+                        entregados.push(new Billete(billete.valor, billete.cantidad));
                         //ACTUALIZAMOS LOS BILLETES QUE QUEDA EN EL CAJERO.
-                        cajero.billetes[cajero.billetes.indexOf(billete)].cantidad -= papeles;
+                        cajero.billetes[posiblesEntregas[0].indexOf(billete)].cantidad -= billete.cantidad;
                         //ACTUALIZAMOS LA CANTIDAD DE DINERO QUE QUEDA EN EL CAJERO.
-                        cajero.dinero -= (billete.valor * papeles);
+                        cajero.dinero -= (billete.valor * billete.cantidad);
                         //GUARDAMOS CUÁNTO HEMOS ENTREGADO, ESTO LO USAMOS DESPUÉS.
-                        cantidadEntregada += (billete.valor * papeles);
-                        cantidad -= (billete.valor * papeles);
+                        cantidadEntregada += (billete.valor * billete.cantidad);
+                        cantidad -= (billete.valor * billete.cantidad);
                         //ACTUALIZAMOS EL DINERO QUE TIENE EL USUARIO EN SU CUENTA.
-                        usuarioActual.dinero -= (billete.valor * papeles);
+                        usuarioActual.dinero -= (billete.valor * billete.cantidad);
                         //MOSTRAMOS LOS BILLETES
-                        for (var i = 0; i < papeles; i++) {
+                        for (var i = 0; i < billete.cantidad; i++) {
                             div_billetes.innerHTML += "<img alt='billete' src='files/" + billete.valor + ".png' style='margin: 5px;' />";
                         }
                     }
@@ -124,7 +187,8 @@ function retirar(){
                         break;
                     }
                 }
-                if (cantidad > 0) {
+                if (cantidad > 0) 
+                {
                     //ESTO EN CASO DE QUE NO CONTEMOS CON BILLETES DE BAJA DENOMINACIÓN.
                     //ES DECIR SI PIDES $1999, PERO LA DENOMINACIÓN MÁS BAJA ES DE $10.00 - NO PODEMOS ENTREGAR $9.00
                     alert("Solo pudimos entregarte " + cantidadEntregada);
